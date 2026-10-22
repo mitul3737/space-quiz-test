@@ -210,15 +210,21 @@
     let current = 0;
     let score = 0;
     let answered = false;
+    let displayedAnswers = [];
 
     function renderQuestion(moveFocus = false) {
       answered = false;
       const item = questions[current];
+      displayedAnswers = item.answers.map((answer, index) => ({ answer, correct: index === item.correct }));
+      for (let index = displayedAnswers.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [displayedAnswers[index], displayedAnswers[swapIndex]] = [displayedAnswers[swapIndex], displayedAnswers[index]];
+      }
       get("question-count").innerHTML = `Question <strong>${String(current + 1).padStart(2, "0")}</strong> / ${questions.length}`;
       get("category").textContent = item.category;
       get("question").textContent = item.question;
       get("answers").replaceChildren();
-      item.answers.forEach((answer, index) => {
+      displayedAnswers.forEach(({ answer }, index) => {
         const button = document.createElement("button");
         button.className = "answer";
         const letter = document.createElement("span");
@@ -241,19 +247,19 @@
       if (answered) return;
       answered = true;
       const item = questions[current];
-      const correct = selected === item.correct;
+      const correct = displayedAnswers[selected].correct;
       if (correct) score++;
       const buttons = [...get("answers").children];
       buttons.forEach((button, index) => {
         button.disabled = true;
-        if (index === item.correct) {
+        if (displayedAnswers[index].correct) {
           button.classList.add("correct");
           button.firstElementChild.textContent = "\u2713";
-          button.setAttribute("aria-label", `${item.answers[index]}, correct answer`);
+          button.setAttribute("aria-label", `${displayedAnswers[index].answer}, correct answer`);
         } else if (index === selected) {
           button.classList.add("wrong");
           button.firstElementChild.textContent = "\u00d7";
-          button.setAttribute("aria-label", `${item.answers[index]}, incorrect answer`);
+          button.setAttribute("aria-label", `${displayedAnswers[index].answer}, incorrect answer`);
         }
       });
       get("score").textContent = `Score: ${score}`;
